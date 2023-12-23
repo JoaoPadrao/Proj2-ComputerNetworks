@@ -18,7 +18,7 @@ int parseURL(char *input_url, struct urlArguments *url){
     char *user_end = strchr(url_part, ':');
     if (user_end == NULL) {
 
-        printf("ERROR: No user and password\n");
+        printf("WARNING: Anonymous MODE\n");
         strncpy(url->user, "anonymous", sizeof(url->user) - 1);
         strncpy(url->password, "anonymous@", sizeof(url->password) - 1);
 
@@ -138,9 +138,9 @@ int readResponse(int socket, char *buf){
         }
     }
 
-    printf("Buf: %s\n", buf);
+    printf("Buffer: %s\n", buf);
     int responseCode = atoi(buf);
-    printf("code: %d\n", responseCode);
+    printf("Code: %d\n", responseCode);
 
     return responseCode;
 }
@@ -183,7 +183,7 @@ int authentication(int socket, char *user, char *password) {
 }
 
 
-int changePassiveMode(int socket, char *ip_address, int *port) {
+int changePassiveMode(int socket, char *ip_address, int *port_socketB) {
     char pasvCommand[] = "pasv\n";
     char result[MAX_LEN];
     int ip1, ip2, ip3, ip4, port1, port2;
@@ -197,7 +197,7 @@ int changePassiveMode(int socket, char *ip_address, int *port) {
     }
     sscanf(result, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)", &ip1, &ip2, &ip3, &ip4, &port1, &port2);
    
-    *port = port1 * 256 + port2; // Calculate port number
+    *port_socketB = port1 * 256 + port2; // Calculate port number
   
     sprintf(ip_address, "%d.%d.%d.%d", ip1, ip2, ip3, ip4);
  
@@ -211,7 +211,7 @@ int requestPath(int socket, char *path) {
     sprintf(retrCommand, "retr %s\n", path);
     write(socket, retrCommand, strlen(retrCommand));
 
-    if (readResponse(socket, result) != 150) {
+    if (readResponse(socket, result) != FILE_OK) {
         printf("ERROR: Server not ready to receive file\n");
         return -1;
     }
@@ -302,7 +302,7 @@ int main(int argc, char **argv)
         printf("ERROR: Server not ready to authenticate\n");
         exit(-1);
     }
-    printf("antes do auth\n");
+
     // Authentication
     if (authentication(socketA, url.user, url.password) != LOGIN_SUCCESS) {
         printf("ERROR: Could not authenticate\n");
@@ -310,15 +310,15 @@ int main(int argc, char **argv)
     }
 
     // Passive mode
-    int port;
+    int port_socketB;
     char ip_address[MAX_LEN];
-    if (changePassiveMode(socketA, ip_address, &port) != 0) {
+    if (changePassiveMode(socketA, ip_address, &port_socketB) != 0) {
         printf("ERROR: Could not enter passive mode\n");
         exit(-1);
     }
 
     // Create socket for data transfer
-    int socketB = createSocket(ip_address, port);
+    int socketB = createSocket(ip_address, port_socketB);
     if (socketB < 0) {
         printf("ERROR: Could not create socket B\n");
         exit(-1);

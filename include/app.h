@@ -50,7 +50,7 @@ int createSocket(char *ip, int port);
 int readResponse(int socket, char *buf);
 int getIP(char *host, char *ip);
 int authentication(int socket, char *user, char *password);
-int changePassiveMode(int socket, char *ip, int *port);
+int changePassiveMode(int socket, char *ip, int *port_socketB);
 int requestPath(int socket, char *path);
 int getFile(int socketA, int socketB, char *filename);
 int endConnection(const int socketA, const int socketB);
